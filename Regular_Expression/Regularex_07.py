@@ -52,11 +52,28 @@ Code Challenge
 
 """
 import pandas as pd
-df=pd.read_csv("population.csv")
-df=df[['city']]
-df
-df.sort_values('city',ascending=True)
-df2=pd.read_csv('citypostalcode.csv')
+import requests as re
 
-Merged_data=pd.merge(df2, df,on="city")
-Merged_data
+url = 'https://en.wikipedia.org/wiki/List_of_cities_in_Germany_by_population'
+html = re.get(url).content 
+postcode=pd.read_csv('C:/Users/Suraj  kumar/Desktop/Forsk_Lab/Regular_Expression/zuordnung_plz_ort.csv')
+postcode.drop(['osm_id','bundesland'],axis=1,inplace=True)
+postcode.drop([0],axis=0,inplace=True)
+postcode.columns=['City','Postcode']
+data = pd.read_html(html)
+
+new_data = data[0].head(20)
+
+new_data.drop([2,3,4,5,6,7,8],axis=1,inplace=True)
+new_data.drop([0],axis=0,inplace=True)
+new_data.columns=['Rank','City']
+
+merged_data=pd.merge(new_data,postcode,on='City')
+merged_data.drop(['Rank'],axis=1,inplace=True)
+merged_data['Postcode']=merged_data['Postcode'].apply(str)
+merged_data=merged_data.groupby('City')
+merged_data.first()
+#merged_data.get_group('Berlin')
+#merged_data.to_dict('series')
+merged_data = merged_data.groupby('City')['Postcode'].apply(', '.join).reset_index()
+merged_data.to_dict()
